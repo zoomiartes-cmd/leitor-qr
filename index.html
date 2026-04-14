@@ -1,151 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leitor de QR Code</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leitor QR Code</title>
 
-  <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      padding: 20px 16px 40px;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #111;
-      color: #fff;
-    }
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #000;
+  color: #fff;
+}
 
-    .container {
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-    }
+.container {
+  max-width: 480px;
+  margin: auto;
+}
 
-    .logo {
-      width: 180px;
-      margin: 10px auto 20px;
-      display: block;
-    }
+.logo img {
+  width: 180px;
+  margin-bottom: 20px;
+}
 
-    h2 {
-      margin: 10px 0 10px;
-      font-size: 28px;
-    }
+button {
+  width: 100%;
+  padding: 14px;
+  margin: 8px 0;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+}
 
-    .subtitle {
-      font-size: 14px;
-      color: #ccc;
-      margin-bottom: 20px;
-    }
+#reader {
+  width: 100%;
+  margin-top: 20px;
+  display: none;
+}
 
-    button {
-      width: 100%;
-      min-height: 50px;
-      padding: 14px;
-      margin: 8px 0;
-      border: none;
-      background: #000;
-      color: white;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.info {
+  margin-top: 10px;
+  font-size: 16px;
+}
 
-    #reader {
-      width: 100%;
-      margin-top: 20px;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #fff;
-    }
+.popup, .form {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
 
-    .info-box {
-      margin-top: 16px;
-      font-size: 16px;
-      font-weight: bold;
-    }
+.box {
+  background: #fff;
+  color: #000;
+  padding: 20px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 350px;
+}
 
-    #popup, #formulario {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      z-index: 9999;
-      padding: 20px;
-    }
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
 
-    .popup-content, .form-content {
-      background: white;
-      color: #111;
-      padding: 20px;
-      margin: 60px auto;
-      width: 100%;
-      max-width: 400px;
-      border-radius: 15px;
-    }
+.secondary {
+  background: #777;
+  color: #fff;
+}
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    .secondary-btn {
-      background: #777;
-    }
-
-    .message {
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-  </style>
+.message {
+  margin-top: 10px;
+  font-size: 14px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <img class="logo" src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp">
+  <div class="logo">
+    <img src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp">
+  </div>
 
   <h2>Leitor de QR Code</h2>
-  <div class="subtitle">Leia os QR codes e finalize seu cadastro</div>
 
-  <button onclick="startScanner()">Abrir câmera</button>
+  <button onclick="startCamera()">Abrir câmera</button>
 
   <div id="reader"></div>
 
-  <div class="info-box">
+  <div class="info">
     QR Codes lidos: <span id="contador">0</span>
   </div>
 
 </div>
 
 <!-- POPUP -->
-<div id="popup">
-  <div class="popup-content">
-    <p>QR Code registrado!</p>
-    <button onclick="continuar()">Ler outro</button>
-    <button class="secondary-btn" onclick="finalizar()">Finalizar</button>
+<div class="popup" id="popup">
+  <div class="box">
+    <h3>QR registrado</h3>
+    <button onclick="scanAgain()">Ler outro</button>
+    <button class="secondary" onclick="finish()">Finalizar</button>
   </div>
 </div>
 
 <!-- FORM -->
-<div id="formulario">
-  <div class="form-content">
+<div class="form" id="form">
+  <div class="box">
     <h3>Seus dados</h3>
     <input type="text" id="nome" placeholder="Nome completo">
     <input type="email" id="email" placeholder="Email">
-    <button onclick="enviar()">Enviar</button>
-    <div id="mensagem" class="message"></div>
+    <button onclick="send()">Enviar</button>
+    <div id="msg" class="message"></div>
   </div>
 </div>
 
@@ -153,56 +136,57 @@
 
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJ48q4XUHFXXAvdZYG6N-cza0eYPNvhdRbRV2uiWFcQviSB-6lBYxyCaEnT0nNYYj6/exec";
 
-let qrCodes = [];
 let scanner;
+let codes = [];
 
-function atualizarContador() {
-  document.getElementById("contador").innerText = qrCodes.length;
+function updateCount() {
+  document.getElementById("contador").innerText = codes.length;
 }
 
-function startScanner() {
+function startCamera() {
+  document.getElementById("reader").style.display = "block";
+
   scanner = new Html5Qrcode("reader");
 
   scanner.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    (qrCodeMessage) => {
-
-      if (!qrCodes.includes(qrCodeMessage)) {
-        qrCodes.push(qrCodeMessage);
-        atualizarContador();
+    (text) => {
+      if (!codes.includes(text)) {
+        codes.push(text);
+        updateCount();
 
         scanner.stop().then(() => {
-          document.getElementById("popup").style.display = "block";
+          document.getElementById("popup").style.display = "flex";
         });
       }
-
     }
   ).catch(() => {
     alert("Erro ao abrir câmera");
   });
 }
 
-function continuar() {
+function scanAgain() {
   document.getElementById("popup").style.display = "none";
-  startScanner();
+  startCamera();
 }
 
-function finalizar() {
+function finish() {
   document.getElementById("popup").style.display = "none";
-  document.getElementById("formulario").style.display = "block";
+  document.getElementById("reader").style.display = "none";
+  document.getElementById("form").style.display = "flex";
 }
 
-async function enviar() {
+async function send() {
 
   const nome = document.getElementById("nome").value.trim();
   const email = document.getElementById("email").value.trim();
-  const mensagem = document.getElementById("mensagem");
+  const msg = document.getElementById("msg");
 
-  mensagem.innerText = "";
+  msg.innerText = "";
 
   if (!nome || !email) {
-    mensagem.innerText = "Preencha nome e email.";
+    msg.innerText = "Preencha todos os campos";
     return;
   }
 
@@ -210,28 +194,37 @@ async function enviar() {
 
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
-        nome: nome,
-        email: email,
-        total_qr_codes: qrCodes.length,
-        lista_qr_codes: qrCodes
+        nome,
+        email,
+        total_qr_codes: codes.length,
+        lista_qr_codes: codes
       })
     });
 
     const text = await response.text();
     console.log("Resposta:", text);
 
-    mensagem.innerText = "Enviado com sucesso!";
-    alert("Enviado com sucesso!");
-    location.reload();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch {
+      throw new Error("Resposta inválida do servidor");
+    }
 
-  } catch (error) {
-    console.error(error);
-    mensagem.innerText = "Erro ao enviar.";
-    alert("Erro ao enviar.");
+    if (result.success) {
+      msg.innerText = "Enviado com sucesso!";
+      alert("Enviado com sucesso!");
+      location.reload();
+    } else {
+      throw new Error(result.error || "Erro ao salvar");
+    }
+
+  } catch (err) {
+    console.error(err);
+    msg.innerText = "Erro: " + err.message;
+    alert("Erro ao enviar: " + err.message);
   }
 }
 
