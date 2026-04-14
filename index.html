@@ -5,244 +5,439 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Leitor de QR Code</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      padding: 16px;
-      text-align: center;
+      margin: 0;
+      padding: 24px 16px 40px;
       background: #f5f5f5;
+      color: #111;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
     }
 
     h1 {
-      font-size: 24px;
+      font-size: 28px;
       margin-bottom: 8px;
     }
 
-    p {
+    .subtitle {
       color: #555;
+      font-size: 14px;
+      margin-bottom: 20px;
     }
 
-    .controls {
-      margin: 16px 0;
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
     }
 
     button {
-      padding: 12px 16px;
-      font-size: 16px;
-      margin: 6px;
       border: none;
-      border-radius: 10px;
-      background: #111;
-      color: white;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
+    }
+
+    .btn-primary {
+      background: #111;
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-secondary {
+      background: #ececec;
+      color: #111;
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .btn-row button {
+      flex: 1;
     }
 
     #reader {
       width: 100%;
       max-width: 360px;
-      margin: 20px auto;
+      margin: 16px auto 0;
       display: none;
-      background: white;
-      padding: 10px;
-      border-radius: 12px;
+      overflow: hidden;
+      border-radius: 14px;
     }
 
     #status {
-      margin: 12px 0;
+      margin-top: 12px;
       font-weight: bold;
+      font-size: 14px;
+      min-height: 20px;
     }
 
-    table {
-      width: 100%;
-      max-width: 900px;
-      margin: 20px auto;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
+    .count-box {
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 600;
     }
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
+    .small {
+      font-size: 13px;
+      color: #666;
+    }
+
+    #formularioSection {
+      display: none;
       text-align: left;
-      word-break: break-word;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
       font-size: 14px;
     }
 
-    th {
-      background: #111;
-      color: white;
+    input, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d8d8d8;
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 24px 18px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 22px;
+    }
+
+    .modal p {
+      color: #555;
+      margin-bottom: 0;
+    }
+
+    .success {
+      color: #0a7d32;
+      font-weight: 700;
+    }
+
+    #resumoCodigos {
+      font-size: 13px;
+      color: #444;
+      background: #fafafa;
     }
   </style>
 </head>
 <body>
-  <h1>Leitor de QR Code</h1>
-  <p>Abra a câmera e escaneie vários QR codes. Cada leitura será registrada.</p>
+  <div class="container">
+    <h1>Leitor de QR Code</h1>
+    <p class="subtitle">
+      Leia seus QR codes e finalize com seus dados para envio ao time.
+    </p>
 
-  <div class="controls">
-    <button onclick="iniciarLeitura()">Abrir câmera</button>
-    <button onclick="pararLeitura()">Parar câmera</button>
-    <button onclick="limparRegistros()">Limpar registros</button>
-    <button onclick="exportarCSV()">Exportar CSV</button>
+    <div class="card" id="scannerSection">
+      <button class="btn-primary" id="btnAbrirCamera" type="button">
+        Abrir câmera
+      </button>
+
+      <div id="reader"></div>
+
+      <div id="status">Aguardando início da leitura.</div>
+      <div class="count-box">QR codes registrados: <span id="contador">0</span></div>
+      <p class="small">Após cada leitura, você poderá escolher entre continuar ou finalizar.</p>
+    </div>
+
+    <div class="card" id="formularioSection">
+      <h2 style="margin-top:0;">Finalize seu cadastro</h2>
+      <p class="small" style="margin-bottom:16px;">
+        Preencha seus dados para enviar os QR codes registrados ao time.
+      </p>
+
+      <form
+        id="leadForm"
+        action="https://formsubmit.co/startlogocriacao@gmail.com"
+        method="POST"
+      >
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" name="nome" required />
+
+        <label for="email">Email de cadastro</label>
+        <input type="email" id="email" name="email" required />
+
+        <label for="totalCodigosVisivel">Quantidade de QR codes lidos</label>
+        <input type="text" id="totalCodigosVisivel" readonly />
+
+        <label for="resumoCodigos">QR codes registrados</label>
+        <textarea id="resumoCodigos" readonly></textarea>
+
+        <input type="hidden" name="_subject" value="Novo envio de leitura de QR Code" />
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="hidden" name="_template" value="table" />
+
+        <input type="hidden" id="totalCodigos" name="total_qr_codes" />
+        <input type="hidden" id="listaCodigos" name="lista_qr_codes" />
+        <input type="hidden" id="dataEnvio" name="data_envio" />
+
+        <button class="btn-primary" type="submit">Enviar</button>
+      </form>
+    </div>
   </div>
 
-  <div id="status">Aguardando...</div>
-  <div id="reader"></div>
+  <div class="modal-backdrop" id="modalLeitura">
+    <div class="modal">
+      <h2 class="success">Registro feito com sucesso</h2>
+      <p id="textoModal">
+        O QR code foi registrado.
+      </p>
 
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>QR Code</th>
-        <th>Data/Hora</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-registros"></tbody>
-  </table>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btnLerOutro" type="button">Ler outro QR code</button>
+        <button class="btn-primary" id="btnFinalizar" type="button">Finalizar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    let html5QrCode;
+    let html5QrCode = null;
     let cameraAtiva = false;
-
-    const readerId = "reader";
-    const tabela = document.getElementById("tabela-registros");
-    const statusEl = document.getElementById("status");
 
     const registros = [];
     const ultimoScanPorCodigo = new Map();
     const intervaloDuplicadoMs = 3000;
 
-    function formatarData(data) {
-      return data.toLocaleString("pt-BR");
-    }
+    const readerEl = document.getElementById("reader");
+    const statusEl = document.getElementById("status");
+    const contadorEl = document.getElementById("contador");
+    const scannerSection = document.getElementById("scannerSection");
+    const formularioSection = document.getElementById("formularioSection");
+
+    const modalLeitura = document.getElementById("modalLeitura");
+    const textoModal = document.getElementById("textoModal");
+    const btnAbrirCamera = document.getElementById("btnAbrirCamera");
+    const btnLerOutro = document.getElementById("btnLerOutro");
+    const btnFinalizar = document.getElementById("btnFinalizar");
+
+    const totalCodigosVisivel = document.getElementById("totalCodigosVisivel");
+    const resumoCodigos = document.getElementById("resumoCodigos");
+    const totalCodigos = document.getElementById("totalCodigos");
+    const listaCodigos = document.getElementById("listaCodigos");
+    const dataEnvio = document.getElementById("dataEnvio");
 
     function tocarBeep() {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
 
         oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        gainNode.connect(ctx.destination);
 
-        oscillator.type = "sine";
-        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.08;
 
         oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.12);
-      } catch (e) {}
+        oscillator.stop(ctx.currentTime + 0.12);
+      } catch (e) {
+        console.log("Beep não disponível.");
+      }
     }
 
-    function adicionarRegistro(texto) {
+    function atualizarContador() {
+      contadorEl.textContent = registros.length;
+    }
+
+    function formatarDataHora(date) {
+      return date.toLocaleString("pt-BR");
+    }
+
+    function registrarQRCode(texto) {
       const agora = new Date();
       const timestamp = agora.getTime();
 
       const ultimo = ultimoScanPorCodigo.get(texto);
       if (ultimo && (timestamp - ultimo) < intervaloDuplicadoMs) {
-        statusEl.innerText = "QR repetido ignorado: " + texto;
-        return;
+        statusEl.textContent = "Esse QR code já foi lido há poucos segundos.";
+        return false;
       }
 
       ultimoScanPorCodigo.set(texto, timestamp);
 
-      const registro = {
-        indice: registros.length + 1,
+      registros.push({
         codigo: texto,
-        dataHora: formatarData(agora)
-      };
+        dataHora: formatarDataHora(agora)
+      });
 
-      registros.push(registro);
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${registro.indice}</td>
-        <td>${registro.codigo}</td>
-        <td>${registro.dataHora}</td>
-      `;
-
-      tabela.prepend(tr);
-      statusEl.innerText = "QR registrado: " + texto;
+      atualizarContador();
       tocarBeep();
+      statusEl.textContent = "QR code registrado com sucesso.";
+      return true;
     }
 
     async function iniciarLeitura() {
-      if (cameraAtiva) return;
-
       try {
         if (!window.isSecureContext) {
-          throw new Error("Use HTTPS para acessar a câmera.");
+          throw new Error("A câmera só funciona em HTTPS.");
         }
 
-        document.getElementById(readerId).style.display = "block";
+        readerEl.style.display = "block";
 
         if (!html5QrCode) {
-          html5QrCode = new Html5Qrcode(readerId);
+          html5QrCode = new Html5Qrcode("reader");
         }
 
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          (decodedText) => {
-            adicionarRegistro(decodedText);
-          },
-          () => {}
-        );
+        if (!cameraAtiva) {
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: 250
+            },
+            async (decodedText) => {
+              if (!cameraAtiva) return;
 
-        cameraAtiva = true;
-        statusEl.innerText = "Câmera ativa.";
+              const registrou = registrarQRCode(decodedText);
+              if (!registrou) return;
+
+              await pausarCameraParaDecisao(decodedText);
+            },
+            () => {}
+          );
+
+          cameraAtiva = true;
+          statusEl.textContent = "Câmera ativa. Aponte para um QR code.";
+        }
       } catch (err) {
-        statusEl.innerText = "Erro ao abrir câmera: " + (err.message || err);
+        statusEl.textContent = "Erro ao abrir câmera: " + (err.message || err);
         console.error(err);
       }
     }
 
-    async function pararLeitura() {
-      if (!html5QrCode || !cameraAtiva) return;
+    async function pausarCameraParaDecisao(codigoLido) {
+      try {
+        if (html5QrCode && cameraAtiva) {
+          await html5QrCode.pause(true);
+        }
+      } catch (e) {
+        console.log("Não foi possível pausar a câmera.", e);
+      }
+
+      textoModal.textContent = `O QR code "${codigoLido}" foi registrado.`;
+      modalLeitura.style.display = "flex";
+    }
+
+    function fecharModal() {
+      modalLeitura.style.display = "none";
+    }
+
+    async function continuarLeitura() {
+      fecharModal();
 
       try {
-        await html5QrCode.stop();
-        cameraAtiva = false;
-        document.getElementById(readerId).style.display = "none";
-        statusEl.innerText = "Câmera parada.";
-      } catch (err) {
-        statusEl.innerText = "Erro ao parar câmera: " + (err.message || err);
+        if (html5QrCode) {
+          await html5QrCode.resume();
+          statusEl.textContent = "Câmera ativa. Pode ler outro QR code.";
+        }
+      } catch (e) {
+        console.log("Erro ao retomar câmera.", e);
+        statusEl.textContent = "Não foi possível retomar a câmera automaticamente.";
       }
     }
 
-    function limparRegistros() {
-      registros.length = 0;
-      ultimoScanPorCodigo.clear();
-      tabela.innerHTML = "";
-      statusEl.innerText = "Registros apagados.";
+    async function finalizarLeituras() {
+      fecharModal();
+
+      try {
+        if (html5QrCode && cameraAtiva) {
+          await html5QrCode.stop();
+          cameraAtiva = false;
+        }
+      } catch (e) {
+        console.log("Erro ao parar câmera.", e);
+      }
+
+      readerEl.style.display = "none";
+      btnAbrirCamera.classList.add("hidden");
+      scannerSection.classList.add("hidden");
+      formularioSection.style.display = "block";
+
+      preencherFormularioComRegistros();
+      statusEl.textContent = "Leitura finalizada.";
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function exportarCSV() {
+    function preencherFormularioComRegistros() {
+      const lista = registros.map((item, index) => {
+        return `${index + 1}. ${item.codigo} | ${item.dataHora}`;
+      });
+
+      totalCodigosVisivel.value = String(registros.length);
+      resumoCodigos.value = lista.join("\n");
+      totalCodigos.value = String(registros.length);
+      listaCodigos.value = lista.join(" || ");
+      dataEnvio.value = new Date().toISOString();
+    }
+
+    btnAbrirCamera.addEventListener("click", iniciarLeitura);
+    btnLerOutro.addEventListener("click", continuarLeitura);
+    btnFinalizar.addEventListener("click", finalizarLeituras);
+
+    document.getElementById("leadForm").addEventListener("submit", function (e) {
       if (registros.length === 0) {
-        alert("Nenhum registro para exportar.");
+        e.preventDefault();
+        alert("Você precisa registrar pelo menos um QR code antes de enviar.");
         return;
       }
 
-      const linhas = [
-        ["Indice", "QRCode", "DataHora"],
-        ...registros.map(r => [r.indice, r.codigo, r.dataHora])
-      ];
-
-      const csv = linhas
-        .map(linha => linha.map(valor => `"${String(valor).replace(/"/g, '""')}"`).join(";"))
-        .join("\\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "registros_qrcode.csv";
-      a.click();
-
-      URL.revokeObjectURL(url);
-    }
+      preencherFormularioComRegistros();
+    });
   </script>
 </body>
 </html>
