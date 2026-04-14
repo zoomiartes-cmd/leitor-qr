@@ -15,8 +15,8 @@
       padding: 20px 16px 40px;
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #f5f5f5;
-      color: #111;
+      background: #111;
+      color: #fff;
     }
 
     .container {
@@ -25,7 +25,6 @@
       margin: 0 auto;
     }
 
-    /* LOGO */
     .logo {
       width: 180px;
       margin: 10px auto 20px;
@@ -34,12 +33,12 @@
 
     h2 {
       margin: 10px 0 10px;
-      font-size: 26px;
+      font-size: 28px;
     }
 
     .subtitle {
       font-size: 14px;
-      color: #555;
+      color: #ccc;
       margin-bottom: 20px;
     }
 
@@ -49,7 +48,7 @@
       padding: 14px;
       margin: 8px 0;
       border: none;
-      background: black;
+      background: #000;
       color: white;
       border-radius: 10px;
       font-size: 16px;
@@ -62,6 +61,7 @@
       margin-top: 20px;
       border-radius: 12px;
       overflow: hidden;
+      background: #fff;
     }
 
     .info-box {
@@ -70,18 +70,18 @@
       font-weight: bold;
     }
 
-    /* POPUP E FORM */
     #popup, #formulario {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.75);
       z-index: 9999;
       padding: 20px;
     }
 
     .popup-content, .form-content {
       background: white;
+      color: #111;
       padding: 20px;
       margin: 60px auto;
       width: 100%;
@@ -102,6 +102,11 @@
       background: #777;
     }
 
+    .message {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
   </style>
 </head>
 
@@ -109,7 +114,6 @@
 
 <div class="container">
 
-  <!-- LOGO -->
   <img class="logo" src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp">
 
   <h2>Leitor de QR Code</h2>
@@ -141,12 +145,13 @@
     <input type="text" id="nome" placeholder="Nome completo">
     <input type="email" id="email" placeholder="Email">
     <button onclick="enviar()">Enviar</button>
+    <div id="mensagem" class="message"></div>
   </div>
 </div>
 
 <script>
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzyRh68CLigX7IoVVs60cBaxnCJ6fPItltkwi4ZbmVR1sGGKbliNeO4UkzJbB8KhwZn/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0zeplBp7jGW-yjhvqAT7jFrrcZNIlmIZzSzrw8xWjdQzAEX6lpD19dCRNt1ydCTFm/exec";
 
 let qrCodes = [];
 let scanner;
@@ -167,11 +172,15 @@ function startScanner() {
         qrCodes.push(qrCodeMessage);
         atualizarContador();
 
-        scanner.stop();
-        document.getElementById("popup").style.display = "block";
+        scanner.stop().then(() => {
+          document.getElementById("popup").style.display = "block";
+        });
       }
+
     }
-  );
+  ).catch(() => {
+    alert("Erro ao abrir câmera");
+  });
 }
 
 function continuar() {
@@ -184,29 +193,46 @@ function finalizar() {
   document.getElementById("formulario").style.display = "block";
 }
 
-function enviar() {
-  const nome = document.getElementById("nome").value;
-  const email = document.getElementById("email").value;
+async function enviar() {
 
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain"
-    },
-    body: JSON.stringify({
-      nome,
-      email,
-      total_qr_codes: qrCodes.length,
-      lista_qr_codes: qrCodes
-    })
-  })
-  .then(() => {
+  const nome = document.getElementById("nome").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const mensagem = document.getElementById("mensagem");
+
+  mensagem.innerText = "";
+
+  if (!nome || !email) {
+    mensagem.innerText = "Preencha nome e email.";
+    return;
+  }
+
+  try {
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        nome: nome,
+        email: email,
+        total_qr_codes: qrCodes.length,
+        lista_qr_codes: qrCodes
+      })
+    });
+
+    const text = await response.text();
+    console.log("Resposta:", text);
+
+    mensagem.innerText = "Enviado com sucesso!";
     alert("Enviado com sucesso!");
     location.reload();
-  })
-  .catch(() => {
+
+  } catch (error) {
+    console.error(error);
+    mensagem.innerText = "Erro ao enviar.";
     alert("Erro ao enviar.");
-  });
+  }
 }
 
 </script>
