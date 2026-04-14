@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leitor de QR Code</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 16px;
+      text-align: center;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #555;
+    }
+
+    .controls {
+      margin: 16px 0;
+    }
+
+    button {
+      padding: 12px 16px;
+      font-size: 16px;
+      margin: 6px;
+      border: none;
+      border-radius: 10px;
+      background: #111;
+      color: white;
+      cursor: pointer;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 360px;
+      margin: 20px auto;
+      display: none;
+      background: white;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    #status {
+      margin: 12px 0;
+      font-weight: bold;
+    }
+
+    table {
+      width: 100%;
+      max-width: 900px;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      word-break: break-word;
+      font-size: 14px;
+    }
+
+    th {
+      background: #111;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Leitor de QR Code</h1>
+  <p>Abra a câmera e escaneie vários QR codes. Cada leitura será registrada.</p>
+
+  <div class="controls">
+    <button onclick="iniciarLeitura()">Abrir câmera</button>
+    <button onclick="pararLeitura()">Parar câmera</button>
+    <button onclick="limparRegistros()">Limpar registros</button>
+    <button onclick="exportarCSV()">Exportar CSV</button>
+  </div>
+
+  <div id="status">Aguardando...</div>
+  <div id="reader"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>QR Code</th>
+        <th>Data/Hora</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-registros"></tbody>
+  </table>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script>
+    let html5QrCode;
+    let cameraAtiva = false;
+
+    const readerId = "reader";
+    const tabela = document.getElementById("tabela-registros");
+    const statusEl = document.getElementById("status");
+
+    const registros = [];
+    const ultimoScanPorCodigo = new Map();
+    const intervaloDuplicadoMs = 3000;
+
+    function formatarData(data) {
+      return data.toLocaleString("pt-BR");
+    }
+
+    function tocarBeep() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
+    }
+
+    function adicionarRegistro(texto) {
+      const agora = new Date();
+      const timestamp = agora.getTime();
+
+      const ultimo = ultimoScanPorCodigo.get(texto);
+      if (ultimo && (timestamp - ultimo) < intervaloDuplicadoMs) {
+        statusEl.innerText = "QR repetido ignorado: " + texto;
+        return;
+      }
+
+      ultimoScanPorCodigo.set(texto, timestamp);
+
+      const registro = {
+        indice: registros.length + 1,
+        codigo: texto,
+        dataHora: formatarData(agora)
+      };
+
+      registros.push(registro);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${registro.indice}</td>
+        <td>${registro.codigo}</td>
+        <td>${registro.dataHora}</td>
+      `;
+
+      tabela.prepend(tr);
+      statusEl.innerText = "QR registrado: " + texto;
+      tocarBeep();
+    }
+
+    async function iniciarLeitura() {
+      if (cameraAtiva) return;
+
+      try {
+        if (!window.isSecureContext) {
+          throw new Error("Use HTTPS para acessar a câmera.");
+        }
+
+        document.getElementById(readerId).style.display = "block";
+
+        if (!html5QrCode) {
+          html5QrCode = new Html5Qrcode(readerId);
+        }
+
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (decodedText) => {
+            adicionarRegistro(decodedText);
+          },
+          () => {}
+        );
+
+        cameraAtiva = true;
+        statusEl.innerText = "Câmera ativa.";
+      } catch (err) {
+        statusEl.innerText = "Erro ao abrir câmera: " + (err.message || err);
+        console.error(err);
+      }
+    }
+
+    async function pararLeitura() {
+      if (!html5QrCode || !cameraAtiva) return;
+
+      try {
+        await html5QrCode.stop();
+        cameraAtiva = false;
+        document.getElementById(readerId).style.display = "none";
+        statusEl.innerText = "Câmera parada.";
+      } catch (err) {
+        statusEl.innerText = "Erro ao parar câmera: " + (err.message || err);
+      }
+    }
+
+    function limparRegistros() {
+      registros.length = 0;
+      ultimoScanPorCodigo.clear();
+      tabela.innerHTML = "";
+      statusEl.innerText = "Registros apagados.";
+    }
+
+    function exportarCSV() {
+      if (registros.length === 0) {
+        alert("Nenhum registro para exportar.");
+        return;
+      }
+
+      const linhas = [
+        ["Indice", "QRCode", "DataHora"],
+        ...registros.map(r => [r.indice, r.codigo, r.dataHora])
+      ];
+
+      const csv = linhas
+        .map(linha => linha.map(valor => `"${String(valor).replace(/"/g, '""')}"`).join(";"))
+        .join("\\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "registros_qrcode.csv";
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
