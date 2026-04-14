@@ -15,8 +15,8 @@ body {
   padding: 20px;
   font-family: Arial, sans-serif;
   text-align: center;
-  background: #000;
-  color: #fff;
+  background: #fff; /* fundo branco */
+  color: #000; /* texto preto */
 }
 
 .container {
@@ -29,6 +29,14 @@ body {
   margin-bottom: 20px;
 }
 
+.texto-instrucao {
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 300;
+  color: #555;
+  margin-bottom: 20px;
+}
+
 button {
   width: 100%;
   padding: 14px;
@@ -37,9 +45,19 @@ button {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  background: #fff;
-  color: #000;
   font-weight: bold;
+}
+
+/* botão principal preto */
+button.primary {
+  background: #000;
+  color: #fff;
+}
+
+/* botão secundário */
+.secondary {
+  background: #777;
+  color: #fff;
 }
 
 #reader {
@@ -80,11 +98,6 @@ input {
   border: 1px solid #ccc;
 }
 
-.secondary {
-  background: #777;
-  color: #fff;
-}
-
 .message {
   margin-top: 10px;
   font-size: 14px;
@@ -100,19 +113,19 @@ input {
     <img src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp">
   </div>
   
-<p class="texto-instrucao">
-  Faça a leitura do Qr code interno que se encontra dentro da embalagem da Chefe.
-</p>
+  <p class="texto-instrucao">
+    Faça a leitura do Qr code interno que se encontra dentro da embalagem da Chefe.
+  </p>
   
   <h2>Leitor de Qr Code</h2>
 
-  <button onclick="startCamera()">Abrir câmera</button>
+  <button class="primary" onclick="startCamera()">Abrir câmera</button>
 
   <div id="reader"></div>
 
   <div class="info">
-  QR codes lidos: <span id="contador">0</span>
-</div>
+    QR codes lidos: <span id="contador">0</span>
+  </div>
 
 </div>
 
@@ -120,9 +133,9 @@ input {
 <div class="popup" id="popup">
   <div class="box">
     <h3 style="font-size: 14px; font-style: italic; font-weight: 300;">
-  QR CODE REGISTRADO
-</h3>
-    <button onclick="scanAgain()">Ler outro</button>
+      QR CODE REGISTRADO
+    </h3>
+    <button class="primary" onclick="scanAgain()">Ler outro</button>
     <button class="secondary" onclick="finish()">Enviar</button>
   </div>
 </div>
@@ -133,7 +146,7 @@ input {
     <h3>Preencha os dados</h3>
     <input type="text" id="nome" placeholder="Nome completo">
     <input type="email" id="email" placeholder="Email">
-    <button onclick="send()">Enviar</button>
+    <button class="primary" onclick="send()">Enviar</button>
     <div id="msg" class="message"></div>
   </div>
 </div>
