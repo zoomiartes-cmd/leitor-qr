@@ -15,8 +15,8 @@ body {
   padding: 20px;
   font-family: Arial, sans-serif;
   text-align: center;
-  background: #fff; /* fundo branco */
-  color: #000; /* texto preto */
+  background: #fff;
+  color: #000;
 }
 
 .container {
@@ -48,13 +48,11 @@ button {
   font-weight: bold;
 }
 
-/* botão principal preto */
 button.primary {
   background: #000;
   color: #fff;
 }
 
-/* botão secundário */
 .secondary {
   background: #777;
   color: #fff;
@@ -101,6 +99,7 @@ input {
 .message {
   margin-top: 10px;
   font-size: 14px;
+  line-height: 1.5;
 }
 </style>
 </head>
@@ -110,7 +109,7 @@ input {
 <div class="container">
 
   <div class="logo">
-    <img src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp">
+    <img src="https://acdn-us.mitiendanube.com/stores/006/376/572/themes/common/logo-1519015875-1750439417-b6b8db548d14ee965e07d28984221b291750439417-480-0.webp" alt="Logo Chefe">
   </div>
   
   <p class="texto-instrucao">
@@ -152,7 +151,6 @@ input {
 </div>
 
 <script>
-
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyx50--4dxlPwnWLCokZmzYdPPzaHR4oAgH9QW4hsCxrzdqz9Jl56Y6S6DhUcehs8co/exec";
 
 let scanner;
@@ -197,12 +195,11 @@ function finish() {
 }
 
 async function send() {
-
   const nome = document.getElementById("nome").value.trim();
   const email = document.getElementById("email").value.trim();
   const msg = document.getElementById("msg");
 
-  msg.innerText = "";
+  msg.innerHTML = "";
 
   if (!nome || !email) {
     msg.innerText = "Preencha todos os campos";
@@ -210,7 +207,6 @@ async function send() {
   }
 
   try {
-
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -233,9 +229,11 @@ async function send() {
     }
 
     if (result.success) {
-      msg.innerText = "Enviado com sucesso!";
-      alert("Enviado com sucesso!");
-      location.reload();
+      msg.innerHTML = `
+        <strong>Enviado com sucesso!</strong><br>
+        Aguarde a validação por e-mail.<br>
+        Em caso de dúvida entre em contato: atendimento@chefe.pet
+      `;
     } else {
       throw new Error(result.error || "Erro ao salvar");
     }
@@ -246,7 +244,6 @@ async function send() {
     alert("Erro ao enviar: " + err.message);
   }
 }
-
 </script>
 
 </body>
